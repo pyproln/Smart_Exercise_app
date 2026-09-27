@@ -1,0 +1,11 @@
+{
+  "name": "My Home Workout",
+  "short_name": "Workout",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f6f7fb",
+  "theme_color": "#2f6fed",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

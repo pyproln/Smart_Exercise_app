@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2f6fed">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<title>My Home Workout</title>
+<style>
+  :root {
+    --accent:#2f6fed; --accent-dark:#1d4ed8; --bg:#f6f7fb; --card:#fff;
+    --ink:#1a1c23; --muted:#666b78; --line:#e6e8ef; --rest-bg:#171a2b; --success:#1f9d55;
+    box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  body.profile-m{ --accent:#2f6fed; --accent-dark:#1d4ed8; --rest-bg:#14213d; }
+  body.profile-f{ --accent:#c1447e; --accent-dark:#9c2f63; --rest-bg:#2b1730; }
+  *{box-sizing:border-box;}
+  html,body{width:100%;min-height:100%;}
+  body{margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--ink);font-size:18px;}
+  h1,h2,h3{margin:0 0 12px;}
+  .hidden{display:none!important;}
+  button{font-family:inherit;cursor:pointer;}
+  .screen{padding:24px 18px 100px;max-width:820px;margin:0 auto;}
+  .card{background:var(--card);border-radius:14px;padding:22px;margin-bottom:16px;box-shadow:0 2px 8px rgba(20,20,40,.06);}
+  .btn{display:block;width:100%;padding:16px;font-size:18px;font-weight:700;border:none;border-radius:12px;background:var(--accent);color:#fff;}
+  .btn:hover{background:var(--accent-dark);}
+  .btn.secondary{background:transparent;color:var(--ink);border:2px solid var(--line);}
+  .btn.success{background:var(--success);}
+  .row{display:flex;gap:10px;flex-wrap:wrap;}
+  input[type=number]{width:100%;padding:14px;font-size:18px;border:1px solid var(--line);border-radius:10px;}
+  label{display:block;font-weight:600;margin-bottom:6px;font-size:15px;color:var(--muted);}
+  .muted{color:var(--muted);font-size:14px;}
+  .pill{display:inline-block;padding:6px 14px;border-radius:999px;background:var(--accent);color:#fff;font-weight:700;font-size:14px;}
+
+  /* Profile select */
+  #screen-profileSelect{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:5vh 6vw;}
+  .profile-button{display:block;width:100%;max-width:520px;margin:16px auto;padding:36px 24px;font-size:26px;font-weight:800;border:2px solid transparent;border-radius:18px;background:var(--card);box-shadow:0 2px 10px rgba(20,20,40,.08);}
+  .profile-button:hover{border-color:var(--accent);}
+
+  /* Bottom nav */
+  #bottomNav{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--card);border-top:1px solid var(--line);padding:8px env(safe-area-inset-bottom,0px) calc(8px + env(safe-area-inset-bottom,0px));z-index:500;}
+  #bottomNav button{flex:1;background:none;border:none;padding:8px 4px;font-size:12px;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px;}
+  #bottomNav button.active{color:var(--accent);font-weight:700;}
+  #bottomNav .icon{font-size:22px;}
+
+  /* Exercise preview cards */
+  .exercise-card{background:var(--card);border-radius:12px;padding:20px;margin-bottom:14px;text-align:left;box-shadow:0 2px 8px rgba(20,20,40,.06);}
+  .exercise-card h3{color:var(--accent-dark);}
+  .exercise-detail{margin:6px 0;font-size:15px;color:var(--muted);}
+  .video-link{display:inline-block;margin-top:8px;font-size:14px;color:var(--accent);font-weight:700;text-decoration:none;}
+
+  /* Workout mode: full screen */
+  #workoutMode{display:none;position:fixed;inset:0;z-index:900;background:#fff;overflow-y:auto;padding:4vh 6vw 6vh;flex-direction:column;}
+  #exerciseCounter{display:inline-block;padding:10px 22px;border-radius:999px;background:var(--accent);color:#fff;font-weight:800;font-size:clamp(18px,4vw,26px);margin:0 auto 10px;}
+  .next-exercise-preview{font-size:clamp(15px,2.4vw,20px);color:var(--muted);margin:0 auto 20px;text-align:center;}
+  .next-exercise-preview strong{color:var(--ink);}
+  #currentExerciseName{font-size:clamp(32px,7vw,62px);text-align:center;margin:10px auto 20px;font-weight:900;max-width:900px;}
+  .workout-mode-detail{font-size:clamp(16px,2.6vw,22px);line-height:1.5;max-width:900px;margin:8px auto;text-align:center;color:var(--muted);}
+  #setControl{margin:30px auto 0;padding-top:24px;border-top:1px solid var(--line);width:100%;max-width:700px;text-align:center;}
+  #currentSetLabel{font-size:clamp(24px,4.5vw,36px);}
+  #setTargetDisplay{font-size:clamp(20px,3.5vw,28px);font-weight:700;margin:8px 0 16px;}
+  #completedReps{width:100%;padding:16px;font-size:22px;border:1px solid var(--line);border-radius:10px;margin-top:6px;}
+  #startSetButton,#completeSetButton{margin-top:14px;min-height:70px;font-size:22px;border-radius:16px;}
+  #timeTimerArea{margin:20px auto;padding:24px;border-radius:18px;background:var(--bg);max-width:700px;}
+  .timer-caption{font-size:18px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);}
+  #exerciseTimer{font-size:clamp(64px,16vw,120px);font-weight:800;}
+
+  /* Rest timer: full-screen overlay */
+  #restTimerArea{position:fixed;inset:0;width:100vw;height:100vh;height:100dvh;z-index:9999;background:var(--rest-bg);color:#fff;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:6vh 6vw;}
+  #restTimer{font-size:clamp(120px,26vw,260px);font-weight:800;font-variant-numeric:tabular-nums;}
+  #restUpNext{margin-top:3vh;font-size:clamp(20px,3.6vw,32px);opacity:.9;}
+  #restUpNext strong{display:block;font-size:clamp(26px,4.5vw,42px);margin-top:.5vh;}
+
+  #completionScreen{display:none;position:fixed;inset:0;z-index:900;background:var(--bg);flex-direction:column;justify-content:center;align-items:center;padding:6vh 6vw;text-align:center;}
+  #completionSummary{margin:20px 0;line-height:1.8;font-size:18px;}
+
+  canvas{max-width:100%;}
+  table.simple-table{width:100%;border-collapse:collapse;font-size:15px;}
+  table.simple-table td,table.simple-table th{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left;}
+  .status-message{background:var(--card);border-radius:12px;padding:20px;text-align:center;color:var(--muted);}
+</style>
+</head>
+<body>
+
+<!-- ===================== PROFILE SELECT ===================== -->
+<div id="screen-profileSelect">
+  <h1 style="text-align:center;">Who is working out?</h1>
+  <div id="profileButtons"></div>
+</div>
+
+<!-- ===================== HOME ===================== -->
+<div id="screen-home" class="screen hidden">
+  <h2>Today's Workout</h2>
+  <div id="homeContent"><div class="status-message">Loading…</div></div>
+</div>
+
+<!-- ===================== PROGRESS LOG ===================== -->
+<div id="screen-progress" class="screen hidden">
+  <h2>Log Progress</h2>
+  <div class="card">
+    <label for="inputWeight">Weight (kg)</label>
+    <input type="number" id="inputWeight" step="0.1" placeholder="e.g. 79.5">
+    <div style="height:12px;"></div>
+    <label for="inputWaist">Waist (cm)</label>
+    <input type="number" id="inputWaist" step="0.1" placeholder="e.g. 88">
+    <div style="height:16px;"></div>
+    <button class="btn" id="saveProgressBtn">Save Entry</button>
+    <div id="progressSaveStatus" class="muted" style="margin-top:10px;"></div>
+  </div>
+  <h3>Recent entries</h3>
+  <div id="progressHistoryList"><div class="status-message">Loading…</div></div>
+</div>
+
+<!-- ===================== HISTORY ===================== -->
+<div id="screen-history" class="screen hidden">
+  <h2>Workout History</h2>
+  <div id="historyList"><div class="status-message">Loading…</div></div>
+</div>
+
+<!-- ===================== DASHBOARD ===================== -->
+<div id="screen-dashboard" class="screen hidden">
+  <h2>Dashboard</h2>
+  <div class="card">
+    <div class="row">
+      <div style="flex:1;"><div class="muted">Sessions this week</div><h2 id="statSessionsWeek">–</h2></div>
+      <div style="flex:1;"><div class="muted">Total sessions</div><h2 id="statSessionsTotal">–</h2></div>
+    </div>
+  </div>
+  <div class="card">
+    <h3>Weekly sessions</h3>
+    <canvas id="chartWeekly" height="160"></canvas>
+  </div>
+  <div class="card">
+    <h3>Weight trend</h3>
+    <canvas id="chartWeight" height="160"></canvas>
+  </div>
+  <div class="card">
+    <h3>Waist trend</h3>
+    <canvas id="chartWaist" height="160"></canvas>
+  </div>
+  <div class="card">
+    <h3>Personal records</h3>
+    <div id="prList"><div class="status-message">Loading…</div></div>
+  </div>
+</div>
+
+<!-- ===================== SETTINGS ===================== -->
+<div id="screen-settings" class="screen hidden">
+  <h2>Settings</h2>
+  <div class="card">
+    <h3 id="settingsProfileName"></h3>
+    <p class="muted" id="settingsGoals"></p>
+    <p class="muted" id="settingsStats"></p>
+  </div>
+  <div class="card">
+    <h3>Weekly Plan</h3>
+    <p class="muted">Regenerates this week's schedule from your goals and owned equipment. Existing history is kept - only future/active schedule rows are replaced.</p>
+    <button class="btn" id="regeneratePlanBtn">Regenerate My Weekly Plan</button>
+    <div id="regenerateStatus" class="muted" style="margin-top:10px;"></div>
+  </div>
+  <div class="card">
+    <h3>Notifications</h3>
+    <p class="muted">Enable a browser reminder for days you haven't logged a workout yet. Only fires while the app is open in your browser.</p>
+    <button class="btn secondary" id="enableNotifBtn">Enable Notifications</button>
+  </div>
+  <div class="card">
+    <button class="btn secondary" id="switchProfileBtn">Switch Profile</button>
+  </div>
+</div>
+
+<!-- ===================== BOTTOM NAV ===================== -->
+<div id="bottomNav" class="hidden">
+  <button data-screen="home"><span class="icon">🏠</span>Home</button>
+  <button data-screen="progress"><span class="icon">📈</span>Progress</button>
+  <button data-screen="history"><span class="icon">🕒</span>History</button>
+  <button data-screen="dashboard"><span class="icon">📊</span>Dashboard</button>
+  <button data-screen="settings"><span class="icon">⚙️</span>Settings</button>
+</div>
+
+<!-- ===================== WORKOUT MODE (full screen) ===================== -->
+<div id="workoutMode">
+  <p id="exerciseCounter" style="align-self:center;"></p>
+  <p id="nextExercisePreview" class="next-exercise-preview"></p>
+  <h2 id="currentExerciseName"></h2>
+  <p class="workout-mode-detail"><strong>Muscle:</strong> <span id="currentExerciseMuscle"></span></p>
+  <p class="workout-mode-detail"><strong>Equipment:</strong> <span id="currentExerciseEquipment"></span></p>
+  <p class="workout-mode-detail" id="videoLinkWrap"></p>
+  <p class="workout-mode-detail"><strong>Instructions:</strong> <span id="currentExerciseInstructions"></span></p>
+
+  <div id="setControl">
+    <h3 id="currentSetLabel">SET 1</h3>
+    <p id="setTargetDisplay"></p>
+
+    <div id="timeTimerArea" class="hidden">
+      <div class="timer-caption">TIME</div>
+      <div id="exerciseTimer">00:00</div>
+      <div id="timeTimerStatus" class="muted">Ready</div>
+    </div>
+
+    <div id="repInputArea" class="hidden">
+      <label for="completedReps">Reps Completed</label>
+      <input type="number" id="completedReps" min="1" step="1" placeholder="Enter reps">
+      <button id="completeSetButton" class="btn success">COMPLETE SET</button>
+    </div>
+
+    <button id="startSetButton" class="btn">START SET</button>
+  </div>
+</div>
+
+<!-- REST TIMER: separate full-screen overlay, outside workoutMode's scroll flow -->
+<div id="restTimerArea">
+  <div class="timer-caption">REST</div>
+  <div id="restTimer">00:00</div>
+  <div id="restUpNext"></div>
+</div>
+
+<!-- ===================== COMPLETION ===================== -->
+<div id="completionScreen">
+  <h1>Workout Complete! 🎉</h1>
+  <h2 id="completedWorkoutName"></h2>
+  <div id="completionSummary"></div>
+  <button id="doneButton" class="btn" style="max-width:320px;">DONE</button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+/* =========================================================
+   API CONFIG — paste your Apps Script Web App /exec URL here
+   ========================================================= */
+const API_BASE_URL = "https://script.google.com/macros/s/AKfycbydrRsSzfIb1G-WLskuCXK1N9GKiXwm5tWEFV8Yxn7MNG6uMAmOoWrpjRZsFBPrLIAC/exec";
+
+function apiGet(action, params) {
+  const q = new URLSearchParams(Object.assign({ action: action }, params || {})).toString();
+  return fetch(API_BASE_URL + "?" + q).then(r => r.json()).then(handleApiResponse);
+}
+function apiPost(action, payload) {
+  return fetch(API_BASE_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify(Object.assign({ action: action }, payload || {}))
+  }).then(r => r.json()).then(handleApiResponse);
+}
+function handleApiResponse(res) {
+  if (!res.ok) throw new Error(res.error || "Request failed");
+  return res.data;
+}
+
+// ---------------------------------------------------------
+// STATE
+// ---------------------------------------------------------
+let selectedProfileId = null;
+let selectedProfile = null;
+let currentSessionId = null;
+let currentWorkout = null;
+let workoutModeExercises = [];
+let currentExerciseIndex = 0;
+let currentSetNumber = 1;
+let completedSets = 0;
+let currentSetTargets = [];
+let currentSetStarted = false;
+let currentSetCompleting = false;
+let exerciseTimerInterval = null, remainingExerciseSeconds = 0;
+let restTimerInterval = null, remainingRestSeconds = 0, restNextAction = null;
+let audioContext = null;
+
+const REST_BETWEEN_SETS_SEC = 30;
+const REST_BETWEEN_EXERCISES_SEC = 15;
+
+const $ = id => document.getElementById(id);
+function escapeHtml(v){ if(v===null||v===undefined) return ""; return String(v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;"); }
+
+// ---------------------------------------------------------
+// NAVIGATION
+// ---------------------------------------------------------
+function showScreen(name){
+  ["home","progress","history","dashboard","settings"].forEach(s=>{
+    $("screen-"+s).classList.toggle("hidden", s!==name);
+  });
+  document.querySelectorAll("#bottomNav button").forEach(b=>{
+    b.classList.toggle("active", b.dataset.screen===name);
+  });
+  if (name==="home") loadHome();
+  if (name==="progress") loadProgressScreen();
+  if (name==="history") loadHistoryScreen();
+  if (name==="dashboard") loadDashboardScreen();
+  if (name==="settings") loadSettingsScreen();
+}
+document.querySelectorAll("#bottomNav button").forEach(b=>{
+  b.addEventListener("click", ()=>showScreen(b.dataset.screen));
+});
+
+// ---------------------------------------------------------
+// PROFILE SELECT
+// ---------------------------------------------------------
+function loadProfiles(){
+  apiGet("getProfiles").then(profiles=>{
+    const container = $("profileButtons");
+    container.innerHTML = "";
+    if (!profiles || !profiles.length){
+      container.innerHTML = "<div class='status-message'>No active profiles found.</div>";
+      return;
+    }
+    profiles.forEach(p=>{
+      const btn = document.createElement("button");
+      btn.className = "profile-button";
+      const icon = p.profileId==="M" ? "👨" : p.profileId==="F" ? "👩" : "👤";
+      btn.textContent = icon + " " + p.displayName;
+      btn.onclick = ()=>selectProfile(p);
+      container.appendChild(btn);
+    });
+  }).catch(err=>{
+    $("profileButtons").innerHTML = "<div class='status-message'>Unable to load profiles.<br>"+escapeHtml(err.message)+"</div>";
+  });
+}
+
+function selectProfile(profile){
+  selectedProfileId = profile.profileId;
+  selectedProfile = profile;
+  document.body.classList.remove("profile-m","profile-f");
+  document.body.classList.add(profile.profileId==="M" ? "profile-m" : "profile-f");
+  $("screen-profileSelect").classList.add("hidden");
+  $("bottomNav").classList.remove("hidden");
+  showScreen("home");
+}
+
+function switchProfile(){
+  selectedProfileId = null; selectedProfile = null;
+  document.body.classList.remove("profile-m","profile-f");
+  $("bottomNav").classList.add("hidden");
+  $("screen-profileSelect").classList.remove("hidden");
+  loadProfiles();
+}
+$("switchProfileBtn").addEventListener("click", switchProfile);
+
+// ---------------------------------------------------------
+// HOME SCREEN
+// ---------------------------------------------------------
+function loadHome(){
+  const el = $("homeContent");
+  el.innerHTML = "<div class='status-message'>Loading today's workout…</div>";
+  apiGet("getTodayWorkout", {profileId: selectedProfileId}).then(workout=>{
+    if (!workout){
+      el.innerHTML = "<div class='status-message'><h3>Rest Day</h3><p>No workout scheduled for today.</p></div>";
+      return;
+    }
+    currentWorkout = workout;
+    apiGet("getWorkoutExercises", {scheduleId: workout.scheduleId}).then(exercises=>{
+      if (!exercises.length){
+        el.innerHTML = "<div class='status-message'>No exercises found for this workout.</div>";
+        return;
+      }
+      let html = "<div class='card'><h3>"+escapeHtml(workout.workoutName)+"</h3><p class='muted'>"+escapeHtml(workout.day)+" · "+escapeHtml(workout.workoutType)+"</p></div>";
+      exercises.forEach((ex,i)=>{
+        html += "<div class='exercise-card'>"
+          + "<h3>"+(i+1)+". "+escapeHtml(ex.exerciseName)+"</h3>"
+          + "<p class='exercise-detail'><strong>Muscle:</strong> "+escapeHtml(ex.muscleGroup)+"</p>"
+          + "<p class='exercise-detail'><strong>Sets x Reps:</strong> "+escapeHtml(ex.sets)+" x "+escapeHtml(ex.reps)+"</p>"
+          + (ex.videoMediaUrl ? "<a class='video-link' target='_blank' rel='noopener' href='"+encodeURI(ex.videoMediaUrl)+"'>▶ Watch demo</a>" : "")
+          + "</div>";
+      });
+      html += "<button id='startWorkoutButton' class='btn' style='margin-top:10px;'>START WORKOUT</button>";
+      el.innerHTML = html;
+      $("startWorkoutButton").onclick = startWorkout;
+    });
+  }).catch(err=>{
+    el.innerHTML = "<div class='status-message'>Unable to load workout.<br>"+escapeHtml(err.message)+"</div>";
+  });
+}
+
+function startWorkout(){
+  const btn = $("startWorkoutButton");
+  btn.disabled = true; btn.textContent = "STARTING…";
+  apiPost("startWorkoutSession", {profileId: selectedProfileId, scheduleId: currentWorkout.scheduleId}).then(session=>{
+    currentSessionId = session.sessionId;
+    loadWorkoutMode(session.scheduleId);
+  }).catch(err=>{
+    alert("Unable to start workout.\n\n"+err.message);
+    btn.disabled = false; btn.textContent = "START WORKOUT";
+  });
+}
+
+// ---------------------------------------------------------
+// WORKOUT MODE
+// ---------------------------------------------------------
+function loadWorkoutMode(scheduleId){
+  apiGet("getWorkoutModeData", {scheduleId}).then(data=>{
+    workoutModeExercises = data.exercises || [];
+    currentExerciseIndex = 0;
+    if (!workoutModeExercises.length){ alert("No exercises found for this workout."); return; }
+    $("bottomNav").classList.add("hidden");
+    $("workoutMode").style.display = "flex";
+    $("completionScreen").style.display = "none";
+    showCurrentExercise();
+  }).catch(err=> alert("Unable to load workout mode.\n\n"+err.message));
+}
+
+function showCurrentExercise(){
+  stopExerciseTimer(); stopRestTimer();
+  const exercise = workoutModeExercises[currentExerciseIndex];
+  if (!exercise){ finishWorkout(); return; }
+
+  currentSetNumber = 1; completedSets = 0; currentSetStarted = false; currentSetCompleting = false;
+  currentSetTargets = getSetTargets(exercise.sets, exercise.reps);
+
+  $("exerciseCounter").textContent = "Exercise "+(currentExerciseIndex+1)+" of "+workoutModeExercises.length;
+
+  const next = workoutModeExercises[currentExerciseIndex+1];
+  $("nextExercisePreview").innerHTML = next ? "Next up: <strong>"+escapeHtml(next.exerciseName)+"</strong>" : "Last exercise of this workout";
+
+  $("currentExerciseName").textContent = exercise.exerciseName;
+  $("currentExerciseMuscle").textContent = exercise.muscleGroup;
+  $("currentExerciseEquipment").textContent = exercise.equipment;
+  $("videoLinkWrap").innerHTML = exercise.videoMediaUrl ? "<a class='video-link' target='_blank' rel='noopener' href='"+encodeURI(exercise.videoMediaUrl)+"'>▶ Watch demo</a>" : "";
+  $("currentExerciseInstructions").textContent = exercise.instructions || "No instructions available.";
+
+  $("currentSetLabel").textContent = "SET 1 OF "+exercise.sets;
+  $("setTargetDisplay").textContent = "Target: "+(currentSetTargets[0] || exercise.reps || "—");
+
+  $("startSetButton").style.display = "block";
+  $("startSetButton").disabled = false;
+  $("startSetButton").textContent = "START SET";
+  $("repInputArea").classList.add("hidden");
+  $("timeTimerArea").classList.add("hidden");
+  $("completedReps").value = "";
+}
+
+function isTimeBasedExercise(reps){
+  if (!reps) return false;
+  const t = String(reps).toLowerCase();
+  return t.includes("sec") || t.includes("second") || t.includes("min");
+}
+function getSetTargets(sets, reps){
+  const n = Number(sets);
+  if (!n || n<=0) return [];
+  let text = String(reps).trim().replace(/[–—]/g,"-");
+  if (isTimeBasedExercise(text)) return Array(n).fill(text);
+  const parts = text.split("-").map(p=>p.trim());
+  return parts.length===n ? parts : Array(n).fill(text);
+}
+function parseTimeSeconds(text){
+  const t = String(text||"").toLowerCase().replace(/[–—]/g,"-");
+  const nums = t.match(/\d+(?:\.\d+)?/g);
+  if (!nums) return 0;
+  const v = Math.max.apply(null, nums.map(Number));
+  return t.includes("min") ? Math.round(v*60) : Math.round(v);
+}
+function formatTimer(sec){
+  const s = Math.max(0, Math.ceil(Number(sec)||0));
+  return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");
+}
+
+$("startSetButton").addEventListener("click", startSet);
+function startSet(){
+  if (currentSetStarted || currentSetCompleting) return;
+  const exercise = workoutModeExercises[currentExerciseIndex];
+  currentSetStarted = true;
+  $("startSetButton").style.display = "none";
+  $("currentSetLabel").textContent = "SET "+currentSetNumber+" OF "+exercise.sets;
+  const target = currentSetTargets[currentSetNumber-1];
+  $("setTargetDisplay").textContent = "Target: "+(target || exercise.reps);
+
+  if (isTimeBasedExercise(exercise.reps)) startExerciseTimer(target);
+  else {
+    $("repInputArea").classList.remove("hidden");
+    $("completedReps").value = "";
+    $("completedReps").focus();
+  }
+}
+
+function startExerciseTimer(targetText){
+  const duration = parseTimeSeconds(targetText);
+  if (!duration){ alert("Unable to determine duration from: "+targetText); currentSetStarted=false; $("startSetButton").style.display="block"; return; }
+  remainingExerciseSeconds = duration;
+  $("timeTimerArea").classList.remove("hidden");
+  $("timeTimerStatus").textContent = "GO";
+  $("exerciseTimer").textContent = formatTimer(remainingExerciseSeconds);
+  if (exerciseTimerInterval) clearInterval(exerciseTimerInterval);
+  exerciseTimerInterval = setInterval(()=>{
+    remainingExerciseSeconds--;
+    $("exerciseTimer").textContent = formatTimer(remainingExerciseSeconds);
+    if (remainingExerciseSeconds<=0){
+      clearInterval(exerciseTimerInterval); exerciseTimerInterval=null;
+      $("timeTimerStatus").textContent = "TIME COMPLETE";
+      playBuzzer();
+      completeTimeSet(duration);
+    }
+  }, 1000);
+}
+function stopExerciseTimer(){
+  if (exerciseTimerInterval){ clearInterval(exerciseTimerInterval); exerciseTimerInterval=null; }
+  remainingExerciseSeconds = 0;
+  $("timeTimerArea").classList.add("hidden");
+}
+function completeTimeSet(duration){
+  if (currentSetCompleting) return;
+  currentSetCompleting = true;
+  $("timeTimerArea").classList.add("hidden");
+  const exercise = workoutModeExercises[currentExerciseIndex];
+  const target = currentSetTargets[currentSetNumber-1];
+  recordCompletedSet(exercise, target, String(duration));
+}
+
+$("completeSetButton").addEventListener("click", completeSet);
+function completeSet(){
+  if (currentSetCompleting || !currentSetStarted) return;
+  const input = $("completedReps");
+  const reps = Number(input.value);
+  if (!Number.isFinite(reps) || reps<=0){ alert("Please enter the number of reps completed."); input.focus(); return; }
+  currentSetCompleting = true;
+  const exercise = workoutModeExercises[currentExerciseIndex];
+  const target = currentSetTargets[currentSetNumber-1];
+  $("repInputArea").classList.add("hidden");
+  recordCompletedSet(exercise, target, String(reps));
+}
+
+function recordCompletedSet(exercise, plannedTarget, completedValue){
+  completedSets++;
+  $("currentSetLabel").textContent = "SET "+currentSetNumber+" COMPLETED";
+  const logSetNumber = currentSetNumber;
+
+  apiPost("logExerciseSet", {
+    sessionId: currentSessionId, exerciseId: exercise.exerciseId, setNumber: logSetNumber,
+    setsPlanned: Number(exercise.sets), plannedTarget, completedValue, completed: true
+  }).then(()=>{
+    const isLastSet = currentSetNumber >= Number(exercise.sets);
+    const isLastExercise = currentExerciseIndex >= workoutModeExercises.length-1;
+
+    if (isLastSet && isLastExercise){
+      currentSetCompleting = false;
+      finishWorkout(); // no rest after the very last set
+    } else if (isLastSet){
+      startRestBeforeNextExercise(exercise);
+    } else {
+      startRestBeforeNextSet(exercise);
+    }
+  }).catch(err=>{
+    currentSetCompleting = false;
+    alert("The set could not be saved.\n\n"+err.message+"\n\nPlease try again.");
+    $("startSetButton").style.display = "block"; $("startSetButton").textContent = "START SET";
+    currentSetStarted = false;
+  });
+}
+
+function startRestBeforeNextSet(exercise){
+  restNextAction = "NEXT_SET";
+  $("restUpNext").innerHTML = "Up next<strong>Set "+(currentSetNumber+1)+" of "+escapeHtml(exercise.sets)+" — "+escapeHtml(exercise.exerciseName)+"</strong>";
+  startRestTimer(REST_BETWEEN_SETS_SEC);
+}
+function startRestBeforeNextExercise(exercise){
+  restNextAction = "NEXT_EXERCISE";
+  const upcoming = workoutModeExercises[currentExerciseIndex+1];
+  $("restUpNext").innerHTML = upcoming ? "Up next<strong>"+escapeHtml(upcoming.exerciseName)+"</strong>" : "";
+  startRestTimer(REST_BETWEEN_EXERCISES_SEC);
+}
+function startRestTimer(seconds){
+  stopExerciseTimer();
+  if (!seconds || seconds<=0){ handleRestComplete(); return; }
+  remainingRestSeconds = seconds;
+  $("restTimerArea").style.display = "flex";
+  $("restTimer").textContent = formatTimer(remainingRestSeconds);
+  if (restTimerInterval) clearInterval(restTimerInterval);
+  restTimerInterval = setInterval(()=>{
+    remainingRestSeconds--;
+    $("restTimer").textContent = formatTimer(remainingRestSeconds);
+    if (remainingRestSeconds<=0){
+      clearInterval(restTimerInterval); restTimerInterval=null;
+      $("restTimerArea").style.display = "none";
+      playBuzzer();
+      handleRestComplete();
+    }
+  }, 1000);
+}
+function stopRestTimer(){
+  if (restTimerInterval){ clearInterval(restTimerInterval); restTimerInterval=null; }
+  remainingRestSeconds = 0; restNextAction = null;
+  $("restTimerArea").style.display = "none";
+  $("restUpNext").innerHTML = "";
+}
+function handleRestComplete(){
+  const action = restNextAction; restNextAction = null;
+  currentSetCompleting = false; currentSetStarted = false;
+  if (action==="NEXT_SET") moveToNextSet();
+  else if (action==="NEXT_EXERCISE"){ currentExerciseIndex++; showCurrentExercise(); }
+}
+function moveToNextSet(){
+  const exercise = workoutModeExercises[currentExerciseIndex];
+  currentSetNumber++;
+  currentSetStarted = false; currentSetCompleting = false;
+  $("currentSetLabel").textContent = "SET "+currentSetNumber+" OF "+exercise.sets;
+  const target = currentSetTargets[currentSetNumber-1];
+  $("setTargetDisplay").textContent = "Target: "+(target || exercise.reps);
+  $("completedReps").value = "";
+  $("repInputArea").classList.add("hidden");
+  $("timeTimerArea").classList.add("hidden");
+  $("startSetButton").style.display = "block";
+  $("startSetButton").disabled = false;
+  $("startSetButton").textContent = "START SET";
+}
+
+function playBuzzer(){
+  try{
+    if (!audioContext) audioContext = new (window.AudioContext||window.webkitAudioContext)();
+    if (audioContext.state==="suspended") audioContext.resume();
+    const osc = audioContext.createOscillator(), gain = audioContext.createGain();
+    osc.type="sine"; osc.frequency.setValueAtTime(880, audioContext.currentTime);
+    gain.gain.setValueAtTime(0.001, audioContext.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.3, audioContext.currentTime+0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime+0.5);
+    osc.connect(gain); gain.connect(audioContext.destination);
+    osc.start(); osc.stop(audioContext.currentTime+0.5);
+  }catch(e){ console.error("buzzer failed", e); }
+}
+
+function finishWorkout(){
+  stopExerciseTimer(); stopRestTimer();
+  $("startSetButton").disabled = true; $("startSetButton").style.display = "none";
+  if (!currentSessionId){ showCompletionScreen(0); return; }
+  apiPost("completeWorkoutSession", {sessionId: currentSessionId}).then(result=>{
+    showCompletionScreen(result.durationMin);
+  }).catch(err=>{
+    alert("Workout completed, but couldn't be marked Completed.\n\n"+err.message);
+    showCompletionScreen(0);
+  });
+}
+function showCompletionScreen(durationMin){
+  $("workoutMode").style.display = "none";
+  $("completionScreen").style.display = "flex";
+  $("completedWorkoutName").textContent = currentWorkout ? currentWorkout.workoutName : "Workout";
+  $("completionSummary").innerHTML =
+    "<p><strong>Exercises:</strong> "+workoutModeExercises.length+"</p>"+
+    "<p><strong>Duration:</strong> "+durationMin+" min</p>";
+}
+$("doneButton").addEventListener("click", ()=>{
+  currentSessionId=null; workoutModeExercises=[]; currentExerciseIndex=0; currentWorkout=null;
+  $("completionScreen").style.display = "none";
+  $("bottomNav").classList.remove("hidden");
+  showScreen("home");
+});
+
+// ---------------------------------------------------------
+// PROGRESS SCREEN
+// ---------------------------------------------------------
+function loadProgressScreen(){
+  $("progressSaveStatus").textContent = "";
+  $("inputWeight").value = ""; $("inputWaist").value = "";
+  const list = $("progressHistoryList");
+  list.innerHTML = "<div class='status-message'>Loading…</div>";
+  apiGet("getProgressHistory", {profileId: selectedProfileId}).then(entries=>{
+    if (!entries.length){ list.innerHTML = "<div class='status-message'>No entries yet.</div>"; return; }
+    const recent = entries.slice(-10).reverse();
+    let html = "<table class='simple-table'><tr><th>Date</th><th>Weight (kg)</th><th>Waist (cm)</th></tr>";
+    recent.forEach(e=>{ html += "<tr><td>"+e.date+"</td><td>"+(e.weightKg??"—")+"</td><td>"+(e.waistCm??"—")+"</td></tr>"; });
+    html += "</table>";
+    list.innerHTML = html;
+  });
+}
+$("saveProgressBtn").addEventListener("click", ()=>{
+  const weight = $("inputWeight").value, waist = $("inputWaist").value;
+  if (!weight && !waist){ $("progressSaveStatus").textContent = "Enter a weight or waist value."; return; }
+  $("progressSaveStatus").textContent = "Saving…";
+  apiPost("logProgress", {profileId: selectedProfileId, weightKg: weight, waistCm: waist}).then(()=>{
+    $("progressSaveStatus").textContent = "Saved!";
+    loadProgressScreen();
+  }).catch(err=>{ $("progressSaveStatus").textContent = "Error: "+err.message; });
+});
+
+// ---------------------------------------------------------
+// HISTORY SCREEN
+// ---------------------------------------------------------
+function loadHistoryScreen(){
+  const el = $("historyList");
+  el.innerHTML = "<div class='status-message'>Loading…</div>";
+  apiGet("getWorkoutHistory", {profileId: selectedProfileId, limit: 30}).then(rows=>{
+    if (!rows.length){ el.innerHTML = "<div class='status-message'>No completed workouts yet.</div>"; return; }
+    let html = "<table class='simple-table'><tr><th>Date</th><th>Workout</th><th>Duration</th></tr>";
+    rows.forEach(r=>{ html += "<tr><td>"+(r.date||"—")+"</td><td>"+escapeHtml(r.workoutName)+"</td><td>"+r.durationMin+" min</td></tr>"; });
+    html += "</table>";
+    el.innerHTML = html;
+  }).catch(err=>{ el.innerHTML = "<div class='status-message'>"+escapeHtml(err.message)+"</div>"; });
+}
+
+// ---------------------------------------------------------
+// DASHBOARD SCREEN
+// ---------------------------------------------------------
+let chartWeekly, chartWeight, chartWaist;
+function loadDashboardScreen(){
+  apiGet("getDashboardSummary", {profileId: selectedProfileId}).then(d=>{
+    $("statSessionsWeek").textContent = d.sessionsThisWeek;
+    $("statSessionsTotal").textContent = d.totalSessionsCompleted;
+
+    if (chartWeekly) chartWeekly.destroy();
+    chartWeekly = new Chart($("chartWeekly"), { type:"bar",
+      data:{ labels: d.weeklySessionCounts.map(w=>w.weekLabel), datasets:[{label:"Sessions", data:d.weeklySessionCounts.map(w=>w.count), backgroundColor:getComputedStyle(document.body).getPropertyValue("--accent")}] },
+      options:{ plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true, ticks:{stepSize:1}}} }
+    });
+
+    if (chartWeight) chartWeight.destroy();
+    chartWeight = new Chart($("chartWeight"), { type:"line",
+      data:{ labels: d.weightSeries.map(w=>w.date), datasets:[{label:"Weight (kg)", data:d.weightSeries.map(w=>w.weightKg), borderColor:getComputedStyle(document.body).getPropertyValue("--accent"), tension:0.3}] },
+      options:{ plugins:{legend:{display:false}} }
+    });
+
+    if (chartWaist) chartWaist.destroy();
+    chartWaist = new Chart($("chartWaist"), { type:"line",
+      data:{ labels: d.waistSeries.map(w=>w.date), datasets:[{label:"Waist (cm)", data:d.waistSeries.map(w=>w.waistCm), borderColor:"#c1447e", tension:0.3}] },
+      options:{ plugins:{legend:{display:false}} }
+    });
+
+    const prList = $("prList");
+    if (!d.personalRecords.length){ prList.innerHTML = "<div class='status-message'>No records yet — complete some workouts!</div>"; }
+    else {
+      let html = "<table class='simple-table'><tr><th>Exercise</th><th>Best</th></tr>";
+      d.personalRecords.forEach(r=>{ html += "<tr><td>"+escapeHtml(r.exerciseName)+"</td><td>"+r.value+" "+r.unit+"</td></tr>"; });
+      html += "</table>";
+      prList.innerHTML = html;
+    }
+  });
+}
+
+// ---------------------------------------------------------
+// SETTINGS SCREEN
+// ---------------------------------------------------------
+function loadSettingsScreen(){
+  $("settingsProfileName").textContent = selectedProfile.displayName;
+  $("settingsGoals").textContent = "Goals: " + (selectedProfile.goals||[]).join(", ");
+  const s = selectedProfile.stats || {};
+  $("settingsStats").textContent = [s.heightFt?("Height: "+s.heightFt+"ft"):null, s.weightKg?("Weight: "+s.weightKg+"kg"):null, s.age?("Age: "+s.age):null, s.activityNote].filter(Boolean).join(" · ");
+  $("regenerateStatus").textContent = "";
+}
+$("regeneratePlanBtn").addEventListener("click", ()=>{
+  if (!confirm("This replaces your active weekly schedule with a freshly generated one. Continue?")) return;
+  $("regenerateStatus").textContent = "Generating…";
+  apiPost("generateWeeklyPlan", {profileId: selectedProfileId}).then(result=>{
+    $("regenerateStatus").textContent = "Done! New plan generated for "+result.days.length+" days.";
+  }).catch(err=>{ $("regenerateStatus").textContent = "Error: "+err.message; });
+});
+$("enableNotifBtn").addEventListener("click", ()=>{
+  if (!("Notification" in window)){ alert("Notifications aren't supported in this browser."); return; }
+  Notification.requestPermission().then(perm=>{
+    if (perm==="granted"){
+      new Notification("Reminders enabled", {body:"We'll nudge you here if today's workout isn't done yet."});
+      checkWorkoutReminder();
+    }
+  });
+});
+function checkWorkoutReminder(){
+  if (!("Notification" in window) || Notification.permission!=="granted") return;
+  if (!selectedProfileId) return;
+  apiGet("getTodayWorkout", {profileId: selectedProfileId}).then(w=>{
+    if (w) new Notification("Workout waiting", {body: w.workoutName+" is on today's schedule."});
+  }).catch(()=>{});
+}
+
+// ---------------------------------------------------------
+// PWA / SERVICE WORKER
+// ---------------------------------------------------------
+if ("serviceWorker" in navigator){
+  window.addEventListener("load", ()=> navigator.serviceWorker.register("sw.js").catch(()=>{}));
+}
+
+// ---------------------------------------------------------
+// INIT
+// ---------------------------------------------------------
+loadProfiles();
+</script>
+</body>
+</html>
